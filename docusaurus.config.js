@@ -44,6 +44,11 @@ const config = {
   themeConfig:
     /** @type {import('@docusaurus/preset-classic').ThemeConfig} */
     ({
+      algolia: {
+        appId: '18YC75LLJG',
+        apiKey: process.env.ALGOLIA_KEY,
+        indexName: 'marukun-netlify',
+      },
       navbar: {
         title: 'marukun-blog',
         logo: {
@@ -84,3 +89,4 @@ const config = {
 };
 
 module.exports = config;
+
