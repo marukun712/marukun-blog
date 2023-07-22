@@ -30,73 +30,75 @@ import fs from 'fs';
 var result = []
 
 async function GetId() {
-    let res = await fetch(`https://www.googleapis.com/youtube/v3/playlistItems?key=${apikey}&playlistId=${list}&part=snippet&maxResults=50`)
-    let json = await res.json();
-    let items = await json.items
-    let num = await items.length
+    try {
+        let res = await fetch(`https://www.googleapis.com/youtube/v3/playlistItems?key=${apikey}&playlistId=${list}&part=snippet&maxResults=50`)
+        let json = await res.json();
+        let items = await json.items
 
-    for (let i = 0; i < num; i++) {
-        //動画ID、タイトル、サムネイルを取得する
-        let Id = await items[i].snippet.resourceId.videoId
-        let VideoTitle = await items[i].snippet.title
-        let Image = await items[i].snippet.thumbnails.default
-        await GetTimeStamp(
-            {
-                "Id": Id,
-                "Title": VideoTitle,
-                "Image": Image
-            }
-        )
+        await items.map(item => {
+            let id = item.snippet.resourceId.videoId
+            let title = item.snippet.title
+            let image = item.snippet.thumbnails.default
+            GetTimeStamp(
+                {
+                    "id": id,
+                    "title": title,
+                    "image": image
+                }
+            )
+        })
+
     }
-
-    fs.writeFile('data.json', JSON.stringify(result, null, '    '), (err) => {
-        if (err) console.log(`error!::${err}`);
-    });
+    catch (e) {
+        console.log(e)
+    }
 }
 
 async function GetTimeStamp(props) {
-    let res = await fetch(`https://www.googleapis.com/youtube/v3/commentThreads?key=${apikey}&part=snippet&videoId=${props.Id}`)
-    let json = await res.json();
-    let num = await json.items.length
-    let url = await `https://www.youtube.com/watch?v=${props.Id}`
+    try {
+        let res = await fetch(`https://www.googleapis.com/youtube/v3/commentThreads?key=${apikey}&part=snippet&videoId=${props.id}`)
+        let json = await res.json();
+        let items = await json.items
 
-    for (let i = 0; i < num; i++) {
-        let comment = await json.items[i].snippet.topLevelComment.snippet.textOriginal
-        //コメントからタイムスタンプ部分を抜き出す
-        let body = await (String(comment).match(/[0-9]{1,}:[0-9]{1,}:[0-9]{1,}(.*)(.*)|[0-9]{1,}:[0-9]{1,}(.*)(.*)/gi));
-        let time = await (String(comment).match(/[0-9]{1,}:[0-9]{1,}:[0-9]{1,}|[0-9]{1,}:[0-9]{1,}/gi))
-        let title = await (String(body).replace(/[0-9]{1,}:[0-9]{1,}:[0-9]{1,}|[0-9]{1,}:[0-9]{1,}/gi, ""));
-        let titledata = await title.split(',');
-        try {
-            if (time.length > 5) {
-                let stampdata = []
+        await items.map(item => {
+            let comment = item.snippet.topLevelComment.snippet.textOriginal
+            let body = (String(comment).match(/[0-9]{1,}:[0-9]{1,}:[0-9]{1,}(.*)(.*)|[0-9]{1,}:[0-9]{1,}(.*)(.*)/gi));
+            let time = (String(comment).match(/[0-9]{1,}:[0-9]{1,}:[0-9]{1,}|[0-9]{1,}:[0-9]{1,}/gi))
+            let title = (String(body).replace(/[0-9]{1,}:[0-9]{1,}:[0-9]{1,}|[0-9]{1,}:[0-9]{1,}/gi, "")).split(',');
+
+            if (title.length > 5) {
+                let stamp = []
+
                 for (let i = 0; i < time.length; i++) {
-                    stampdata.push({
-                        item: {
+                    stamp.push({
+                        "item": {
                             'time': time[i],
-                            'title': titledata[i]
+                            'title': title[i],
                         }
                     })
                 }
+
                 result.push({
-                    item: {
-                        'timestamp': stampdata,
-                        'id': props.Id,
-                        'videotitle': props.Title,
-                        'image': props.Image,
-                        'url': url
+                    "item": {
+                        'timestamp': stamp,
+                        'id': props.id,
+                        'videotitle': props.title,
+                        'image': props.image,
+                        'url': `https://www.youtube.com/watch?v=${props.id}`
                     }
                 })
-                break;
             }
-        }
-        catch {
-            console.log('Failed.')
-        }
+        })
 
 
+        fs.writeFile('data.json', JSON.stringify(result, null, '    '), (err) => {
+            if (err) console.log(`error!::${err}`);
+        });
+    } catch (e) {
+        console.log(e)
     }
-}
+};
+
 GetId();
 ```
 出力結果
@@ -211,79 +213,80 @@ var result = []
 YouTubeAPIの[PlaylistItems](https://developers.google.com/youtube/v3/docs/playlistItems/list?hl=ja)を利用してプレイリスト内の動画ID、タイトル、サムネイルを取得します。
 ```javascript
 async function GetId() {
-    let res = await fetch(`https://www.googleapis.com/youtube/v3/playlistItems?key=${apikey}&playlistId=${list}&part=snippet&maxResults=50`)
-    let json = await res.json();
-    let items = await json.items
-    let num = await items.length
+    try {
+        let res = await fetch(`https://www.googleapis.com/youtube/v3/playlistItems?key=${apikey}&playlistId=${list}&part=snippet&maxResults=50`)
+        let json = await res.json();
+        let items = await json.items
 
-    for (let i = 0; i < num; i++) {
-        //動画ID、タイトル、サムネイルを取得する
-        let Id = await items[i].snippet.resourceId.videoId
-        let VideoTitle = await items[i].snippet.title
-        let Image = await items[i].snippet.thumbnails.default
-        await GetTimeStamp(
-            {
-                "Id": Id,
-                "Title": VideoTitle,
-                "Image": Image
-            }
-        )
+        await items.map(item => {
+            let id = item.snippet.resourceId.videoId
+            let title = item.snippet.title
+            let image = item.snippet.thumbnails.default
+            GetTimeStamp(
+                {
+                    "id": id,
+                    "title": title,
+                    "image": image
+                }
+            )
+        })
+
     }
-
-    fs.writeFile('data.json', JSON.stringify(result, null, '    '), (err) => {
-        if (err) console.log(`error!::${err}`);
-    });
+    catch (e) {
+        console.log(e)
+    }
 }
 ```
 そして、その結果を引数として後述するGetTimeStamp関数を呼び出しています。
-最後に、タイムスタンプデータと動画ID、タイトル、サムネイルなどが入ったデータをjsonファイルに保存しています。
 ### コメントとタイムスタンプコメントを取得
 取得したIDを元に[CommentThreads](https://developers.google.com/youtube/v3/docs/commentThreads/list)を利用してプレイリスト内の全ての動画に投稿されたコメントデータを取得します。
 その後、取得したコメントデータから正規表現を利用してタイムスタンプコメントのみを取得しています。
+最後に、タイムスタンプデータと動画ID、タイトル、サムネイルなどが入ったデータをjsonファイルに保存しています。
 ```javascript
 async function GetTimeStamp(props) {
-    let res = await fetch(`https://www.googleapis.com/youtube/v3/commentThreads?key=${apikey}&part=snippet&videoId=${props.Id}`)
-    let json = await res.json();
-    let num = await json.items.length
-    let url = await `https://www.youtube.com/watch?v=${props.Id}`
+    try {
+        let res = await fetch(`https://www.googleapis.com/youtube/v3/commentThreads?key=${apikey}&part=snippet&videoId=${props.id}`)
+        let json = await res.json();
+        let items = await json.items
 
-    for (let i = 0; i < num; i++) {
-        let comment = await json.items[i].snippet.topLevelComment.snippet.textOriginal
-        //コメントからタイムスタンプ部分を抜き出す
-        let body = await (String(comment).match(/[0-9]{1,}:[0-9]{1,}:[0-9]{1,}(.*)(.*)|[0-9]{1,}:[0-9]{1,}(.*)(.*)/gi));
-        let time = await (String(comment).match(/[0-9]{1,}:[0-9]{1,}:[0-9]{1,}|[0-9]{1,}:[0-9]{1,}/gi))
-        let title = await (String(body).replace(/[0-9]{1,}:[0-9]{1,}:[0-9]{1,}|[0-9]{1,}:[0-9]{1,}/gi, ""));
-        let titledata = await title.split(',');
-        try {
-            if (time.length > 5) {
-                let stampdata = []
+        await items.map(item => {
+            let comment = item.snippet.topLevelComment.snippet.textOriginal
+            let body = (String(comment).match(/[0-9]{1,}:[0-9]{1,}:[0-9]{1,}(.*)(.*)|[0-9]{1,}:[0-9]{1,}(.*)(.*)/gi));
+            let time = (String(comment).match(/[0-9]{1,}:[0-9]{1,}:[0-9]{1,}|[0-9]{1,}:[0-9]{1,}/gi))
+            let title = (String(body).replace(/[0-9]{1,}:[0-9]{1,}:[0-9]{1,}|[0-9]{1,}:[0-9]{1,}/gi, "")).split(',');
+
+            if (title.length > 5) {
+                let stamp = []
+
                 for (let i = 0; i < time.length; i++) {
-                    stampdata.push({
-                        item: {
+                    stamp.push({
+                        "item": {
                             'time': time[i],
-                            'title': titledata[i]
+                            'title': title[i],
                         }
                     })
                 }
+
                 result.push({
-                    item: {
-                        'timestamp': stampdata,
-                        'id': props.Id,
-                        'videotitle': props.Title,
-                        'image': props.Image,
-                        'url': url
+                    "item": {
+                        'timestamp': stamp,
+                        'id': props.id,
+                        'videotitle': props.title,
+                        'image': props.image,
+                        'url': `https://www.youtube.com/watch?v=${props.id}`
                     }
                 })
-                break;
             }
-        }
-        catch {
-            console.log('Failed.')
-        }
+        })
 
 
+        fs.writeFile('data.json', JSON.stringify(result, null, '    '), (err) => {
+            if (err) console.log(`error!::${err}`);
+        });
+    } catch (e) {
+        console.log(e)
     }
-}
+};
 ```
 # おまけ
 このツールで取得したデータを使ってアルバ・セラさんの歌枠を音楽アプリ風に再生できるwebアプリを作成してみました。

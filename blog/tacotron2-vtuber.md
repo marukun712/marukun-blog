@@ -10,7 +10,6 @@ authors:
 tags: [tacotron2, vtuber]
 hide_table_of_contents: false
 ---
-
 # はじめに　
 こんにちは。
 今回は、tacotron2を使った音声合成に挑戦してみます。
